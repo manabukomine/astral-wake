@@ -1,0 +1,144 @@
+@import "@fontsource/syne/latin-700.css";
+@import "@fontsource/syne/latin-800.css";
+@import "@fontsource/manrope/latin-500.css";
+@import "@fontsource/manrope/latin-600.css";
+@import "@fontsource/manrope/latin-700.css";
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Syne", "IPA P Gothic", "Hiragino Sans", sans-serif;
+  --font-sans: "Manrope", "IPA P Gothic", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  --color-bg: #070b14;
+  --color-surface: #101826;
+  --color-fg: #e7f0ff;
+  --color-muted: #8b9bb4;
+  --color-primary: #2ad4f0;
+  --color-accent: #f0a202;
+  --color-line: #243044;
+  --radius-lg: 1rem;
+  --radius-md: 0.7rem;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    --sat: env(safe-area-inset-top, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+}
+
+.game-shell {
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.game-shell[data-phase="playing"] {
+  touch-action: none;
+}
+
+.safe-pad {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+  padding-right: max(0.75rem, env(safe-area-inset-right));
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  padding-left: max(0.75rem, env(safe-area-inset-left));
+}
+
+.hud-top {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+  padding-right: max(0.75rem, env(safe-area-inset-right));
+  padding-left: max(0.75rem, env(safe-area-inset-left));
+}
+
+.hud-pause {
+  width: 3rem;
+  height: 3rem;
+}
+
+.hud-score {
+  font-size: 1.5rem;
+}
+
+@media (max-width: 540px), (max-height: 500px) and (max-width: 960px) {
+  .hud-top {
+    padding-top: env(safe-area-inset-top);
+    padding-right: max(0.45rem, env(safe-area-inset-right));
+    padding-left: max(0.45rem, env(safe-area-inset-left));
+  }
+
+  .hud-kicker,
+  .hud-best,
+  .hud-boss-label {
+    display: none;
+  }
+
+  .hud-score {
+    font-size: 1.15rem;
+  }
+
+  .hud-row {
+    margin-top: 0.2rem;
+    gap: 0.3rem;
+  }
+
+  .hud-pause {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+
+  .hud-boss {
+    margin-top: 0.3rem;
+    max-width: 7.5rem;
+  }
+
+  .hud-boss .boss-bar {
+    height: 0.2rem;
+  }
+
+  .hud-chip {
+    padding: 0.05rem 0.35rem;
+    font-size: 0.65rem;
+  }
+}
+
+@keyframes aw-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.aw-rise {
+  animation: aw-rise 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aw-rise {
+    animation: none;
+  }
+}
