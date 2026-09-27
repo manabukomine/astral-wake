@@ -128,6 +128,7 @@ type Bullet = {
   vy: number;
   r: number;
   friendly: boolean;
+  reflected: boolean;
   grazed: boolean;
   life: number;
   dmg: number;
@@ -495,7 +496,7 @@ function blankEnemy(): Enemy {
 }
 
 function blankBullet(): Bullet {
-  return { alive: false, x: 0, y: 0, vx: 0, vy: 0, r: 3, friendly: false, grazed: false, life: 0, dmg: 1 };
+  return { alive: false, x: 0, y: 0, vx: 0, vy: 0, r: 3, friendly: false, reflected: false, grazed: false, life: 0, dmg: 1 };
 }
 
 declare global {
@@ -2112,6 +2113,7 @@ export class Game {
     b.vy = vy;
     b.r = r;
     b.friendly = friendly;
+    b.reflected = false;
     b.grazed = false;
     b.life = friendly ? 1.6 : 4.2;
     b.dmg = dmg;
@@ -2506,23 +2508,32 @@ export class Game {
   }
 
   private reflectShots(blade: BladeUnit): void {
-    const band = (this.w >= 740 ? 11 : 8);
+    const band = this.w >= 740 ? 11 : 8;
+    const guard = Math.max(64, Math.min(96, this.w * 0.09));
+    const guardSq = guard * guard;
     const n = Math.min(blade.tx.length, blade.trail);
     if (n < 2) return;
     for (const b of this.bullets) {
       if (!b.alive || b.friendly) continue;
+      const pdx = b.x - this.player.x;
+      const pdy = b.y - this.player.y;
+      if (pdx * pdx + pdy * pdy < guardSq) continue;
       let hit = false;
       for (let k = 0; k < n - 2; k += 2) {
         const ax = blade.tx[k] ?? blade.x;
         const ay = blade.ty[k] ?? blade.y;
         const bx = blade.tx[k + 2] ?? blade.x;
         const by = blade.ty[k + 2] ?? blade.y;
+        const mx = (ax + bx) * 0.5 - this.player.x;
+        const my = (ay + by) * 0.5 - this.player.y;
+        if (mx * mx + my * my < guardSq) continue;
         if (distToSeg(b.x, b.y, ax, ay, bx, by) > band + b.r) continue;
         hit = true;
         break;
       }
       if (!hit) continue;
       b.friendly = true;
+      b.reflected = true;
       b.vx = -b.vx;
       b.vy = -b.vy;
       b.dmg = 1;
@@ -2537,6 +2548,8 @@ export class Game {
       if (!b.alive || !b.friendly) continue;
       for (const e of this.enemies) {
         if (!e.alive) continue;
+        const sturdy = e.kind === "mine" || e.kind === "turret" || e.kind === "chunk";
+        if (b.reflected && sturdy) continue;
         const dx = b.x - e.x;
         const dy = b.y - e.y;
         const rr = b.r + e.r;
