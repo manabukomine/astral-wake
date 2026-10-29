@@ -2261,7 +2261,10 @@ export class Game {
       if (blade.mode === "out" && (this.time * 60) % 2 < 1) {
         this.particle(blade.x, blade.y, -blade.vx * 0.04, -blade.vy * 0.04, 0.22, 2.1, PAL.amber, true);
       }
-      if (blade.mode === "out" && this.reflect) this.reflectShots(blade);
+      if (blade.mode === "out") {
+        if (this.reflect) this.reflectShots(blade);
+        else this.cutShots(blade);
+      }
       if (this.cutEnemies(blade)) cut = true;
     }
     if (threw) this.throwSpin = -this.throwSpin;
@@ -2507,31 +2510,42 @@ export class Game {
     return hit;
   }
 
-  private reflectShots(blade: BladeUnit): void {
+  private trailHitsShot(blade: BladeUnit, b: Bullet): boolean {
     const band = this.w >= 740 ? 11 : 8;
     const guard = Math.max(64, Math.min(96, this.w * 0.09));
     const guardSq = guard * guard;
     const n = Math.min(blade.tx.length, blade.trail);
-    if (n < 2) return;
+    if (n < 2) return false;
+    const pdx = b.x - this.player.x;
+    const pdy = b.y - this.player.y;
+    if (pdx * pdx + pdy * pdy < guardSq) return false;
+    for (let k = 0; k < n - 2; k += 2) {
+      const ax = blade.tx[k] ?? blade.x;
+      const ay = blade.ty[k] ?? blade.y;
+      const bx = blade.tx[k + 2] ?? blade.x;
+      const by = blade.ty[k + 2] ?? blade.y;
+      const mx = (ax + bx) * 0.5 - this.player.x;
+      const my = (ay + by) * 0.5 - this.player.y;
+      if (mx * mx + my * my < guardSq) continue;
+      if (distToSeg(b.x, b.y, ax, ay, bx, by) > band + b.r) continue;
+      return true;
+    }
+    return false;
+  }
+
+  private cutShots(blade: BladeUnit): void {
     for (const b of this.bullets) {
       if (!b.alive || b.friendly) continue;
-      const pdx = b.x - this.player.x;
-      const pdy = b.y - this.player.y;
-      if (pdx * pdx + pdy * pdy < guardSq) continue;
-      let hit = false;
-      for (let k = 0; k < n - 2; k += 2) {
-        const ax = blade.tx[k] ?? blade.x;
-        const ay = blade.ty[k] ?? blade.y;
-        const bx = blade.tx[k + 2] ?? blade.x;
-        const by = blade.ty[k + 2] ?? blade.y;
-        const mx = (ax + bx) * 0.5 - this.player.x;
-        const my = (ay + by) * 0.5 - this.player.y;
-        if (mx * mx + my * my < guardSq) continue;
-        if (distToSeg(b.x, b.y, ax, ay, bx, by) > band + b.r) continue;
-        hit = true;
-        break;
-      }
-      if (!hit) continue;
+      if (!this.trailHitsShot(blade, b)) continue;
+      b.alive = false;
+      this.spark(b.x, b.y);
+    }
+  }
+
+  private reflectShots(blade: BladeUnit): void {
+    for (const b of this.bullets) {
+      if (!b.alive || b.friendly) continue;
+      if (!this.trailHitsShot(blade, b)) continue;
       b.friendly = true;
       b.reflected = true;
       b.vx = -b.vx;
